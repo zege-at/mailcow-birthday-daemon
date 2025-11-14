@@ -1,4 +1,4 @@
-# mailcow-birthday-daemon
+# Mailcow Birthday Daemon 🎂
 
 Very simple daemon that generates and synchronizes a Birthday Calendar for every Mailcow mailbox.
 
@@ -12,6 +12,7 @@ Just add it to the `docker-compose.override.yml`:
 services:
     birthdaydaemon:
         image: ghcr.io/marco98/mailcow-birthday-daemon:0.1.0
+        restart: always
         environment:
         - MAILCOW_BASE=https://mailcow.host
         - MAILCOW_APIKEY=YOUR-APIKEY-HERE
