@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -113,6 +114,13 @@ func (d *Daemon) processUser(ctx context.Context, m mailcow.Mailbox) error {
 	davclient := webdav.HTTPClientWithBasicAuth(d.httpClient, m.Username, pass)
 	bb, err := d.getBirthdays(ctx, davclient, m.Username)
 	if err != nil {
+		if strings.HasPrefix(err.Error(), "401 Unauthorized: ") {
+			slog.WarnContext(ctx, "user password seems to be invalid and will be discarded", "user", m.Username)
+			d.userTokensLock.Lock()
+			delete(d.userTokens, m.Username)
+			d.stateUnsaved = true
+			d.userTokensLock.Unlock()
+		}
 		return fmt.Errorf("error getting birthdays from carddav: %w", err)
 	}
 	if err := d.ensureBirthdayCal(ctx, davclient, m.Username); err != nil {
