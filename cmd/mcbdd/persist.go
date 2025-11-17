@@ -70,7 +70,7 @@ func (d *Daemon) loadFromDisk(state any) error {
 }
 
 func (d *Daemon) saveToDisk(state any) error {
-	f, err := os.OpenFile(d.stateFilepath, os.O_CREATE|os.O_WRONLY, 0o660)
+	f, err := os.OpenFile(d.stateFilepath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o660)
 	if err != nil {
 		return err
 	}
