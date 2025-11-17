@@ -36,7 +36,7 @@ func (d *Daemon) getUserPass(ctx context.Context, username string) (string, erro
 	slog.InfoContext(ctx, "created new app password", "user", username)
 	d.userTokensLock.Lock()
 	d.userTokens[username] = pass
-	d.userTokensUnsaved = true
+	d.stateUnsaved = true
 	d.userTokensLock.Unlock()
 	return pass, nil
 }

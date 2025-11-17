@@ -24,13 +24,13 @@ var (
 )
 
 type Daemon struct {
-	userTokens        map[string]string
-	userTokensLock    *sync.RWMutex
-	userTokensUnsaved bool
-	httpClient        *http.Client
-	baseURL           string
-	mailcowClient     mailcow.Client
-	statefile         string
+	httpClient     *http.Client
+	baseURL        string
+	mailcowClient  mailcow.Client
+	userTokens     map[string]string
+	userTokensLock *sync.RWMutex
+	stateFilepath  string
+	stateUnsaved   bool
 }
 
 func main() {
@@ -46,22 +46,22 @@ func run() error {
 		userTokens:     make(map[string]string),
 		userTokensLock: &sync.RWMutex{},
 		baseURL:        os.Getenv("MAILCOW_BASE"),
-		statefile:      os.Getenv("STATEFILE"),
+		stateFilepath:  os.Getenv("STATEFILE"),
 		httpClient: &http.Client{
 			Transport: &http.Transport{
 				Proxy: http.ProxyFromEnvironment,
 			},
 		},
 	}
-	if len(d.statefile) == 0 {
-		d.statefile = "state.json"
+	if len(d.stateFilepath) == 0 {
+		d.stateFilepath = "state.json"
 	}
 	d.mailcowClient = mailcow.New(
 		d.httpClient,
 		d.baseURL,
 		os.Getenv("MAILCOW_APIKEY"),
 	)
-	if err := d.LoadFromDisk(); err != nil {
+	if err := d.loadState(); err != nil {
 		return err
 	}
 	d.daemonLoop()
@@ -92,12 +92,12 @@ func (d *Daemon) daemonRun() error {
 		})
 	}
 	eg.Wait()
-	if d.userTokensUnsaved {
+	if d.stateUnsaved {
 		slog.Info("saving tokens to disk", "count", len(d.userTokens))
-		if err := d.SaveToDisk(); err != nil {
+		if err := d.saveState(); err != nil {
 			return err
 		}
-		d.userTokensUnsaved = false
+		d.stateUnsaved = false
 	}
 	return nil
 }
